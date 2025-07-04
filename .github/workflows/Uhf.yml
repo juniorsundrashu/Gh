@@ -1,0 +1,52 @@
+name: Clone, Build, and Upload Mirror-Leech Bot EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name for release (e.g. v1.0.0)'
+        required: true
+  release:
+    types: [published]
+
+jobs:
+  build-and-upload:
+    runs-on: windows-latest
+    name: Build Executable and Upload to Release
+
+    steps:
+      - name: 🛎️ Checkout Dummy Repo
+        uses: actions/checkout@v3
+
+      - name: 📥 Clone mirror-leech-telegram-bot
+        run: git clone https://github.com/anasty17/mirror-leech-telegram-bot.git bot_src
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🔧 Install dependencies (excluding uvloop and xattr)
+        run: |
+          cd bot_src
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt || echo "Ignore failures"
+          pip uninstall -y uvloop xattr || echo "Removed Linux-only deps"
+
+      - name: 🛠️ Compile bot/main.py with PyInstaller
+        run: |
+          cd bot_src
+          mkdir dist
+          pyinstaller --onefile bot/main.py --distpath dist --name mirror_leech_bot
+
+      - name: 📦 Zip compiled binary
+        run: powershell Compress-Archive -Path bot_src\dist\* -DestinationPath mirror_leech_bot_windows.zip
+
+      - name: 🚀 Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+          files: mirror_leech_bot_windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.HUB_TOKEN }}
