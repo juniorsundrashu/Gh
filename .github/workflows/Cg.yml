@@ -1,0 +1,43 @@
+name: Clone, Build, and Upload Mirror-Leech Bot
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  build-and-upload:
+    runs-on: windows-latest
+    name: Build Portable Bot and Upload
+
+    steps:
+      - name: 🛎️ Checkout Dummy Repo (Required)
+        uses: actions/checkout@v3
+
+      - name: 📥 Clone external mirror-leech repo
+        run: |
+          git clone https://github.com/anasty17/mirror-leech-telegram-bot.git bot_src
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🔧 Install dependencies and prepare portable folder
+        run: |
+          cd bot_src
+          mkdir portable_bot
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -t portable_bot
+          copy *.py portable_bot
+          copy .env.example portable_bot
+          echo Done preparing portable folder
+
+      - name: 📦 Create ZIP of Portable Bot Folder
+        run: |
+          powershell Compress-Archive -Path bot_src\portable_bot\* -DestinationPath mirror_leech_bot_portable.zip
+
+      - name: 🚀 Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mirror_leech_bot_portable.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.HUB_TOKEN }}
