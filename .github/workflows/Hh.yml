@@ -47,12 +47,10 @@ jobs:
       - name: 🛠️ Build EXE using PyInstaller
         run: |
           cd bot_src
-          pyinstaller --onefile launcher.py ^
-            --name slam_mirror_bot ^
-            --distpath dist ^
-            --add-data "bot;bot" ^
-            --add-data "config;config" ^
-            --add-data "templates;templates" ^
+          pyinstaller --onefile launcher.py --name slam_mirror_bot --distpath dist `
+            --add-data "bot;bot" `
+            --add-data "config;config" `
+            --add-data "templates;templates" `
             --add-data ".env.example;."
 
       - name: 📦 Zip the executable
