@@ -45,6 +45,7 @@ jobs:
           echo "    bot_loop()" >> launcher.py
 
       - name: 🛠️ Build EXE using PyInstaller with full requirements
+        shell: pwsh
         run: |
           cd bot_src
 
@@ -59,11 +60,12 @@ jobs:
           # Optional: collect submodules from common dynamic imports
           $collectArgs = "--collect-submodules pyrogram --collect-submodules urllib3"
 
-          # Build EXE
-          pyinstaller --onefile launcher.py --name slam_mirror_bot --distpath dist `
-            --add-data "source.zip;." `
-            $hiddenArgs $collectArgs
+          # Combine args for PyInstaller
+          $allArgs = "--onefile launcher.py --name slam_mirror_bot --distpath dist --add-data source.zip;. $hiddenArgs $collectArgs"
 
+          # Run PyInstaller
+          pyinstaller $allArgs
+          
       - name: 📦 Zip the executable
         run: |
           powershell Compress-Archive -Path bot_src\dist\slam_mirror_bot.exe -DestinationPath slam_mirror_bot_win.zip
