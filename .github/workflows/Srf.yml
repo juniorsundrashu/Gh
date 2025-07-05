@@ -38,7 +38,7 @@ jobs:
         run: |
           cd bot_src
           mkdir dist
-          pyinstaller --onefile bot/__main__.py --distpath dist --name mirror_leech_bot
+          pyinstaller --onefile bot/__init__.py --distpath dist --name mirror_leech_bot
 
       - name: 📦 Zip compiled binary
         run: powershell Compress-Archive -Path bot_src\dist\* -DestinationPath mirror_leech_bot_windows.zip
