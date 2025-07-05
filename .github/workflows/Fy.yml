@@ -1,0 +1,64 @@
+name: Build and Upload Slam‑MirrorBot EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name for release (e.g. v1.0.0)'
+        required: true
+  release:
+    types: [published]
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    name: Build SMP EXE for Windows
+
+    steps:
+      - name: 🛎️ Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🔧 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt || echo "⚠️ Missing wheels ignored"
+          pip uninstall -y uvloop xattr || echo "✅ Unneeded deps removed"
+
+      - name: 🧠 Create launcher.py (entry point)
+        run: |
+          $launcherCode = @"
+from bot import LOGGER, bot_loop
+
+if __name__ == "__main__":
+    LOGGER.info("Starting Slam Mirror Bot...")
+    bot_loop()
+"@
+          Set-Content -Path launcher.py -Value $launcherCode
+
+      - name: 🛠️ Build EXE using PyInstaller
+        run: |
+          pyinstaller --onefile launcher.py ^
+            --name slam_mirror_bot ^
+            --distpath dist ^
+            --add-data "bot;bot" ^
+            --add-data "config;config" ^
+            --add-data "templates;templates" ^
+            --add-data ".env.example;."
+
+      - name: 📦 Zip the executable
+        run: |
+          powershell Compress-Archive -Path dist\slam_mirror_bot.exe -DestinationPath slam_mirror_bot_win.zip
+
+      - name: 🚀 Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+          files: slam_mirror_bot_win.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.HUB_TOKEN }}
