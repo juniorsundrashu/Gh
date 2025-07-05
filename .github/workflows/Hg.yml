@@ -44,27 +44,31 @@ jobs:
           echo "    LOGGER.info('Starting Slam Mirror Bot...')" >> launcher.py
           echo "    bot_loop()" >> launcher.py
 
-      - name: 🛠️ Build EXE using PyInstaller with full requirements
+      - name: 🛠️ Build EXE using PyInstaller with all hidden imports
         shell: pwsh
         run: |
           cd bot_src
 
-          # Extract all module names from requirements.txt
+          # Extract module names from requirements.txt
           $reqs = Get-Content requirements.txt | ForEach-Object {
             if ($_ -match '^\s*([^=><\[\s]+)') { $matches[1] }
           }
 
-          # Build hidden-import arguments
-          $hiddenArgs = $reqs | ForEach-Object { "--hidden-import=$_" } -join " "
+          # Build the list of --hidden-import flags
+          $hiddenArgsList = @()
+          foreach ($req in $reqs) {
+            $hiddenArgsList += "--hidden-import=$req"
+          }
+          $hiddenArgs = $hiddenArgsList -join " "
 
-          # Optional: collect submodules from common dynamic imports
+          # Extra submodules to include
           $collectArgs = "--collect-submodules pyrogram --collect-submodules urllib3"
 
-          # Combine args for PyInstaller
-          $allArgs = "--onefile launcher.py --name slam_mirror_bot --distpath dist --add-data source.zip;. $hiddenArgs $collectArgs"
+          # Final command string
+          $pyiArgs = "--onefile launcher.py --name slam_mirror_bot --distpath dist --add-data source.zip;. $hiddenArgs $collectArgs"
 
           # Run PyInstaller
-          pyinstaller $allArgs
+          pyinstaller $pyiArgs
           
       - name: 📦 Zip the executable
         run: |
