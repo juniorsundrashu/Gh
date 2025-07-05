@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 📥 Clone mirror-leech-telegram-bot
-        run: git clone https://github.com/juniorsundrashu/mirror-leech-telegram-bot-master.git bot_src
+        run: git clone https://github.com/juniorsundrashu/slam.git bot_src
 
       - name: 🐍 Set up Python 3.11
         uses: actions/setup-python@v5
