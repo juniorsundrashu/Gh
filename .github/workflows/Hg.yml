@@ -59,16 +59,17 @@ jobs:
           foreach ($req in $reqs) {
             $hiddenArgsList += "--hidden-import=$req"
           }
-          $hiddenArgs = $hiddenArgsList -join " "
 
           # Extra submodules to include
-          $collectArgs = "--collect-submodules pyrogram --collect-submodules urllib3"
+          $collectArgs = @("--collect-submodules", "pyrogram", "--collect-submodules", "urllib3")
 
-          # Final command string
-          $pyiArgs = "--onefile launcher.py --name slam_mirror_bot --distpath dist --add-data source.zip;. $hiddenArgs $collectArgs"
+          # Build the full argument list
+          $args = @("--onefile", "launcher.py", "--name", "slam_mirror_bot", "--distpath", "dist", "--add-data", "source.zip;.")
+          $args += $hiddenArgsList
+          $args += $collectArgs
 
-          # Run PyInstaller
-          pyinstaller $pyiArgs
+          # Run PyInstaller with all args
+          & pyinstaller @args
           
       - name: 📦 Zip the executable
         run: |
