@@ -48,10 +48,7 @@ jobs:
         run: |
           cd bot_src
           pyinstaller --onefile launcher.py --name slam_mirror_bot --distpath dist `
-            --add-data "bot;bot" `
-            --add-data "config;config" `
-            --add-data "templates;templates" `
-            --add-data ".env.example;."
+            --add-data "source.zip;." 
 
       - name: 📦 Zip the executable
         run: |
