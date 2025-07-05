@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 📥 Clone mirror-leech-telegram-bot
-        run: git clone https://github.com/anasty17/mirror-leech-telegram-bot.git bot_src
+        run: git clone https://github.com/juniorsundrashu/mirror-leech-telegram-bot-master.git bot_src
 
       - name: 🐍 Set up Python 3.11
         uses: actions/setup-python@v5
@@ -38,7 +38,7 @@ jobs:
         run: |
           cd bot_src
           mkdir dist
-          pyinstaller --onefile bot/__init__.py --distpath dist --name mirror_leech_bot
+          pyinstaller --onefile bot/__main__.py --distpath dist --name mirror_leech_bot
 
       - name: 📦 Zip compiled binary
         run: powershell Compress-Archive -Path bot_src\dist\* -DestinationPath mirror_leech_bot_windows.zip
