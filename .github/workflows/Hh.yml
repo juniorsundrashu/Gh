@@ -29,15 +29,16 @@ jobs:
           pip install -r requirements.txt || echo "⚠️ Missing wheels ignored"
           pip uninstall -y uvloop xattr || echo "✅ Unneeded deps removed"
 
-      - name: ⚙️ Create launcher script
+      - name: ⚙️ Create launcher.py
         run: |
-          cat >launcher.py << 'EOF'
-          import os
-          from bot import LOGGER, bot_loop
-          if __name__ == "__main__":
-              LOGGER.info("Starting Mirror Bot...")
-              bot_loop()
-          EOF
+          $launcherCode = @"
+import os
+from bot import LOGGER, bot_loop
+if __name__ == "__main__":
+    LOGGER.info("Starting Mirror Bot...")
+    bot_loop()
+"@
+          Set-Content -Path launcher.py -Value $launcherCode
 
       - name: 🛠️ Build EXE using PyInstaller
         run: |
@@ -56,7 +57,7 @@ jobs:
       - name: 🚀 Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.tag || github.event.release.tag_name }}
+          tag_name: ${{ github.event.inputs.tag || github.event.release.tag_name }}
           files: slam_mirror_bot_win.zip
         env:
           GITHUB_TOKEN: ${{ secrets.HUB_TOKEN }}
