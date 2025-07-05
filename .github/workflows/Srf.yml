@@ -34,7 +34,7 @@ jobs:
           pip install -r requirements.txt || echo "Ignore failures"
           pip uninstall -y uvloop xattr || echo "Removed Linux-only deps"
 
-      - name: 🛠️ Compile bot/__main__.py with PyInstaller
+      - name: 🛠️ Compile launcher.py with PyInstaller
         run: |
           cd bot_src
           mkdir dist
