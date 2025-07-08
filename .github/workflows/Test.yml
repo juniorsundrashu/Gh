@@ -1,0 +1,59 @@
+name: Build and Upload Stegcloak EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+  release:
+    types: [published]
+
+jobs:
+  build-stegcloak-exe:
+    name: Build Stegcloak for Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: 🧾 Checkout Dummy Repo (For Release Upload)
+        uses: actions/checkout@v3
+
+      - name: 🧬 Clone Stegcloak Source
+        run: |
+          git clone https://github.com/KuroLabs/stegcloak.git
+          cd stegcloak
+          git checkout master
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 📦 Install dependencies and pkg
+        run: |
+          cd stegcloak
+          npm install
+          npm install -g pkg
+
+      - name: 🧠 Patch package.json (if needed)
+        run: |
+          cd stegcloak
+          powershell -Command "(Get-Content package.json) -replace '\"main\":\\s*\"stegcloak.js\"', '\"main\": \"cli.js\"' | Set-Content package.json"
+
+      - name: 🚀 Build stegcloak.exe with pkg
+        run: |
+          cd stegcloak
+          pkg . --targets node18-win-x64 --output stegcloak.exe
+
+      - name: 📦 Zip Output with dist folder
+        run: |
+          cd stegcloak
+          powershell Compress-Archive -Path stegcloak.exe,dist -DestinationPath stegcloak_windows.zip
+
+      - name: ⬆️ Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+          files: stegcloak/stegcloak_windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.HUB_TOKEN }}
