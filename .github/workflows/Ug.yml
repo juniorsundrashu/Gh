@@ -1,0 +1,81 @@
+name: Build and Upload Slam‑MirrorBot EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name for release (e.g. v1.0.0)'
+        required: true
+  release:
+    types: [published]
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    name: Build Slam Mirror Bot EXE for Windows
+
+    steps:
+      - name: 🛎️ Checkout dummy repo
+        uses: actions/checkout@v3
+
+      - name: 📥 Clone Slam Repo
+        run: git clone https://github.com/juniorsundrashu/slam.git bot_src
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🔧 Pre-install lxml using prebuilt binary
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install "lxml==4.8.0" --only-binary :all:
+
+      - name: 🔧 Install dependencies from requirements.txt
+        run: |
+          cd bot_src
+          python -m pip uninstall -y uvloop xattr pathlib || echo "Skipped optional uninstalls"
+          pip install --no-cache-dir -r requirements.txt || echo "⚠️ Some packages may not have wheels"
+
+      - name: 🧠 Create launcher.py
+        run: |
+          cd bot_src
+          echo "from bot import LOGGER, bot_loop" > launcher.py
+          echo "" >> launcher.py
+          echo "if __name__ == '__main__':" >> launcher.py
+          echo "    LOGGER.info('Starting Slam Mirror Bot...')" >> launcher.py
+          echo "    bot_loop()" >> launcher.py
+
+      - name: 🛠️ Build EXE using PyInstaller
+        shell: pwsh
+        run: |
+          cd bot_src
+
+          # Extract module names from requirements.txt
+          $reqs = Get-Content requirements.txt | ForEach-Object {
+            if ($_ -match '^\s*([^=><\[\s]+)') { $matches[1] }
+          }
+
+          $hiddenArgsList = @()
+          foreach ($req in $reqs) {
+            $hiddenArgsList += "--hidden-import=$req"
+          }
+
+          $collectArgs = @("--collect-submodules", "pyrogram", "--collect-submodules", "urllib3")
+
+          $args = @("--onefile", "launcher.py", "--name", "slam_mirror_bot", "--distpath", "dist")
+          $args += $hiddenArgsList
+          $args += $collectArgs
+
+          python -m PyInstaller @args
+
+      - name: 📦 Zip the executable
+        run: powershell Compress-Archive -Path bot_src\dist\slam_mirror_bot.exe -DestinationPath slam_mirror_bot_win.zip
+
+      - name: 🚀 Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+          files: slam_mirror_bot_win.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.HUB_TOKEN }}
