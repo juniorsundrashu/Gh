@@ -35,11 +35,13 @@ jobs:
           npm install
           npm install -g pkg
 
-      - name: 🧠 Patch package.json (if needed)
+      - name: 🧠 Patch package.json to use cli.js
         run: |
           cd stegcloak
-          powershell -Command "(Get-Content package.json) -replace '\"main\":\\s*\"stegcloak.js\"', '\"main\": \"cli.js\"' | Set-Content package.json"
-
+          $json = Get-Content package.json | ConvertFrom-Json
+          $json.main = "cli.js"
+          $json | ConvertTo-Json -Depth 10 | Set-Content package.json
+          
       - name: 🚀 Build stegcloak.exe with pkg
         run: |
           cd stegcloak
