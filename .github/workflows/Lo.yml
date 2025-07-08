@@ -47,27 +47,27 @@ jobs:
           echo "    bot_loop()" >> launcher.py
 
       - name: 🛠️ Build EXE using PyInstaller
-        shell: pwsh
-        run: |
-          cd bot_src
+  shell: pwsh
+  run: |
+    cd bot_src
 
-          # Extract module names from requirements.txt
-          $reqs = Get-Content requirements.txt | ForEach-Object {
-            if ($_ -match '^\s*([^=><\[\s]+)') { $matches[1] }
-          }
+    # Extract module names from requirements.txt
+    $reqs = Get-Content requirements.txt | ForEach-Object {
+      if ($_ -match '^\s*([^=><\[\s]+)') { $matches[1] }
+    }
 
-          $hiddenArgsList = @()
-          foreach ($req in $reqs) {
-            $hiddenArgsList += "--hidden-import=$req"
-          }
+    $hiddenArgsList = @()
+    foreach ($req in $reqs) {
+      $hiddenArgsList += "--hidden-import=$req"
+    }
 
-          $collectArgs = @("--collect-submodules", "pyrogram", "--collect-submodules", "urllib3")
+    $collectArgs = @("--collect-submodules", "pyrogram", "--collect-submodules", "urllib3")
 
-          $args = @("--onefile", "launcher.py", "--name", "slam_mirror_bot", "--distpath", "dist")
-          $args += $hiddenArgsList
-          $args += $collectArgs
+    $args = @("--onefile", "launcher.py", "--name", "slam_mirror_bot", "--distpath", "dist")
+    $args += $hiddenArgsList
+    $args += $collectArgs
 
-          pyinstaller @args
+    python -m PyInstaller @args
 
       - name: 📦 Zip the executable
         run: powershell Compress-Archive -Path bot_src\dist\slam_mirror_bot.exe -DestinationPath slam_mirror_bot_win.zip
