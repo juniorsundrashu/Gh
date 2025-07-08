@@ -26,6 +26,11 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: 🧱 Install precompiled lxml wheel manually
+        run: |
+          pip install --upgrade pip
+          pip install --prefer-binary lxml
+
       - name: 🔧 Install Stable Dependencies (Safe Mode)
         run: |
           cd bot_src
