@@ -26,6 +26,10 @@ jobs:
         with:
           python-version: '3.11'
 
+       - name: 🧱 Install PyInstaller globally
+         run: |
+           pip install pyinstaller
+
       - name: 🔧 Pre-install lxml using prebuilt binary
         run: |
           python -m pip install --upgrade pip setuptools wheel
